@@ -1,52 +1,76 @@
 import Router from 'koa-router';
 import User from '../models/User';
+import KoaAuth from 'koa-basic-auth';
+import mJwt from '../middleware/jwt';
+import auth from '../middleware/auth';
 
-export default (router: Router) => {
-  router
-    .get('/api/users', async (ctx) => {
-      ctx.body = await User.find({});
-    })
-    .post('api/users', async (ctx) => {
-      ctx.body = await User.create({
-        email: ctx.request.body.email,
-        password: ctx.request.body.password,
-        name: ctx.request.body.name,
-      });
-    })
-    .get('/api/users/:id', async (ctx) => {
-      let user;
+const router = new Router();
+const username = 'hello';
+const password = 'donah';
 
-      if (ctx.params.id.length <= 2) {
-        const id = Number.parseInt(ctx.params.id);
-        user = await User.findOne({})
-          .skip(id - 1)
-          .limit(1);
-      } else {
-        user = await User.findById(ctx.params.id);
-      }
+router.post(
+  '/api/auth',
+  KoaAuth({ name: username, pass: password }),
+  async (ctx) => {
+    //console.log('token: ' + mJwt);
+    ctx.body = {
+      token: mJwt,
+    };
+  },
+);
 
-      if (user) {
-        ctx.body = {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-        };
-      }
+router.get('/api/users', async (ctx) => {
+  await User.find()
+    .then((data) => {
+      ctx.body = data;
     })
-    .put('/api/users/:id', async (ctx) => {
-      const user = await User.findByIdAndUpdate(
-        ctx.params.id,
-        { name: ctx.request.body.name },
-        { new: true, runValidators: true }
-      );
-      if (user) {
-        ctx.body = user;
-      }
-    })
-    .delete('/api/users/:id', async (ctx) => {
-      const user = await User.findByIdAndRemove(ctx.params.id);
-      if (user) {
-        ctx.status = 204;
-      }
+    .catch((err) => {
+      ctx.body = 'error ' + err;
     });
-};
+});
+
+router.get('/api/user/:id', async (ctx) => {
+  await User.findOne({ _id: ctx.params.id })
+    .then((users) => {
+      if (users) {
+        ctx.body = users;
+      } else {
+        ctx.body = 'No data available';
+      }
+    })
+    .catch((err) => {
+      ctx.body = 'error ' + err;
+    });
+});
+
+router.post('/api/users', async (ctx) => {
+  await User.create(ctx.request.body)
+    .then((data) => {
+      ctx.body = {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+      };
+    })
+    .catch((err) => {
+      ctx.body = 'error ' + err;
+    });
+});
+
+router.patch('/api/user/:id', async (ctx) => {
+  const documentQuery = { _id: ctx.params.id };
+  const valuesToUpdate = ctx.request.body;
+  await User.updateOne(documentQuery, valuesToUpdate)
+    .then(() => {
+      ctx.body = {
+        _id: ctx.params.id,
+        email: ctx.request.body.email,
+        name: ctx.request.body.name,
+      };
+    })
+    .catch((err) => {
+      ctx.body = 'ersror ' + err;
+    });
+});
+
+export default router;
