@@ -2,7 +2,7 @@ import Router from 'koa-router';
 import User from '../models/User';
 import KoaAuth from 'koa-basic-auth';
 import mJwt from '../middleware/jwt';
-import auth from '../middleware/auth';
+import authenticateJWT from '../middleware/auth';
 
 const router = new Router();
 const username = 'hello';
@@ -12,14 +12,13 @@ router.post(
   '/api/auth',
   KoaAuth({ name: username, pass: password }),
   async (ctx) => {
-    //console.log('token: ' + mJwt);
     ctx.body = {
       token: mJwt,
     };
-  },
+  }
 );
 
-router.get('/api/users', async (ctx) => {
+router.get('/api/users', authenticateJWT, async (ctx) => {
   await User.find()
     .then((data) => {
       ctx.body = data;
