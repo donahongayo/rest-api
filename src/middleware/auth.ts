@@ -1,25 +1,25 @@
+/* eslint-disable no-empty */
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import jwt from 'jsonwebtoken';
-import koa from 'koa';
+import { Request, Next } from 'koa';
+import config from '../config/config';
 
-const username = 'hello';
-const password = 'donah';
-const secret = `${username}` + ':' + `${password}`;
-
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-const authenticateJWT = (req: koa.Request, next: koa.Next) => {
+const authenticateJWT = async (req: Request, next: Next) => {
   const authHeader = req.headers.authorization;
   if (authHeader) {
     const token = authHeader.split(' ')[1];
-    console.log(token);
-    jwt.verify(token, secret, (err) => {
-      if (err) {
-        console.log(err);
-
-        return false;
-      }
-      return true;
-      next();
-    });
+    //console.log(token);
+    let auth;
+    try {
+      auth = jwt.verify(token, config.secret);
+    } catch (err) {}
+    if (auth.username == config.username) {
+      const secret = Buffer.from(`${config.secret}`).toString('base64');
+      console.log(secret);
+      return next();
+    } else {
+      return false;
+    }
   } else {
     return false;
   }
