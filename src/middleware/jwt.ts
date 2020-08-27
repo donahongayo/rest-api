@@ -1,15 +1,11 @@
 import jwt from 'jsonwebtoken';
-
-const username = 'hello';
-const password = 'donah';
-
-const secret = `${username}` + ':' + `${password}`;
+import config from '../config/config';
 
 const token = jwt.sign(
   {
-    username: 'donah',
+    username: config.username,
   },
-  secret
+  config.secret
 );
 
 export default token;
