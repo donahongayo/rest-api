@@ -2,12 +2,13 @@ import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
 import mongoose from 'mongoose';
 
-import users from './routes/users';
+import router from './routes/users';
 
 const app = new Koa();
 
 app.use(bodyParser());
-app.use(users.routes());
+app.use(router.routes());
+app.use(router.allowedMethods());
 
 const server = app.listen({ port: 5000 }, () => {
   mongoose.connect('mongodb://127.0.0.1:27017/docker-mongo', {
